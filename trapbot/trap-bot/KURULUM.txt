@@ -1,0 +1,241 @@
+# 🔴 TRAPBOT — SIFIRDAN KURULUM REHBERİ
+# Hiç kod bilmeden, tamamen ücretsiz deploy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## GENEL MİMARİ
+
+  [Binance API] ←→ [Backend: Railway] ←→ [Frontend: Vercel]
+                              ↓
+                    [Veritabanı: Supabase]
+
+Hepsi ÜCRETSİZ. Gerçek para ödemiyorsun.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 1. HAZIRLIK — GitHub Hesabı Aç (5 dakika)
+
+1. github.com adresine git
+2. "Sign up" ile ücretsiz hesap aç
+3. E-posta doğrula
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 2. BİNANCE TESTNET API KEY (5 dakika)
+
+1. testnet.binance.vision adresine git
+2. Sağ üstten "Log In" → GitHub ile giriş yap
+3. "Generate HMAC_SHA256 Key" butonuna tıkla
+4. Label: "trapbot" yaz → Generate
+5. Çıkan API Key ve Secret Key'i bir yere kaydet!
+   ⚠ Secret Key sadece bir kez gösterilir!
+
+NOT: Testnet = sahte para. Gerçek para kaybetmezsin.
+Canlıya geçmek için binance.com'dan gerçek API key alırsın.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 3. SUPABASE VERİTABANI (10 dakika)
+
+1. supabase.com adresine git → "Start your project"
+2. GitHub ile giriş yap
+3. "New project" → İsim: "trapbot" → Şifre seç → Create
+4. Proje açılınca sol menüden "SQL Editor" tıkla
+5. Aşağıdaki kodu yapıştır ve "Run" butonuna bas:
+
+────────────────────────────────────────
+create table signals (
+  id bigserial primary key,
+  symbol text,
+  interval text,
+  state text,
+  signal boolean,
+  entry float,
+  sl float,
+  tp float,
+  rsi float,
+  real_zone_high float,
+  real_zone_low float,
+  fake_zone_high float,
+  fake_zone_low float,
+  poc float,
+  created_at timestamptz default now()
+);
+
+create table trades (
+  id bigserial primary key,
+  symbol text,
+  side text,
+  quantity float,
+  order_id text,
+  status text,
+  type text,
+  created_at timestamptz default now()
+);
+────────────────────────────────────────
+
+6. Sol menü → "Settings" → "API"
+7. Şunları kopyala ve kaydet:
+   - Project URL  (https://xxx.supabase.co şeklinde)
+   - anon/public key (uzun bir kod)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 4. KODU GITHUB'A YÜKLE (10 dakika)
+
+### Windows'ta:
+1. git-scm.com → Download → Kur
+2. Masaüstüne sağ tıkla → "Git Bash Here"
+3. Şu komutları sırayla çalıştır:
+
+cd Desktop
+# (indirdiğin trapbot klasörü varsa oraya gir)
+cd trap-bot
+
+git init
+git add .
+git commit -m "trapbot ilk yükleme"
+git branch -M main
+
+# GitHub'da New Repository aç, isim: trapbot
+# Sonra aşağıdaki komutu çalıştır (kendi kullanıcı adınla):
+git remote add origin https://github.com/KULLANICI_ADIN/trapbot.git
+git push -u origin main
+
+### Mac'te:
+Terminal aç, aynı komutları çalıştır.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 5. BACKEND → RAILWAY DEPLOY (10 dakika)
+
+1. railway.app adresine git → "Login with GitHub"
+2. "New Project" → "Deploy from GitHub repo"
+3. trapbot reposunu seç
+4. Root directory: "backend" yaz → Deploy
+
+5. Deploy tamamlanınca:
+   Sol menü → "Variables" → aşağıdaki değerleri ekle:
+
+   BINANCE_API_KEY     = (Adım 2'deki API Key)
+   BINANCE_API_SECRET  = (Adım 2'deki Secret Key)
+   BINANCE_TESTNET     = true
+   SUPABASE_URL        = (Adım 3'teki Project URL)
+   SUPABASE_KEY        = (Adım 3'teki anon key)
+
+6. "Settings" → "Networking" → "Generate Domain" tıkla
+7. Çıkan URL'yi kaydet: https://trapbot-xxx.railway.app
+   (Bu senin backend URL'in)
+
+8. Test et: tarayıcıda https://trapbot-xxx.railway.app
+   Ekranda {"status": "Trap Bot is alive 🔴"} görüyorsan TAMAM!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 6. FRONTEND → VERCEL DEPLOY (5 dakika)
+
+1. vercel.com adresine git → "Continue with GitHub"
+2. "Add New Project" → trapbot reposunu seç
+3. Framework: Vite (otomatik algılar)
+4. Root Directory: "frontend" yaz
+5. Environment Variables bölümüne ekle:
+
+   VITE_API_URL = https://trapbot-xxx.railway.app
+   (Railway'den aldığın URL)
+
+6. "Deploy" tıkla!
+7. 2 dakika sonra site hazır!
+   Vercel sana bir URL verir: https://trapbot-xxx.vercel.app
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 7. TEST ET
+
+Tarayıcıda Vercel URL'ini aç.
+
+✅ Grafik görünüyor
+✅ BTCUSDT fiyatı gösteriyor
+✅ State Machine çalışıyor
+✅ Zone seviyeleri hesaplanıyor
+
+Trade test için:
+- Miktar: 0.001
+- SAT butonuna tıkla → Onayla
+- Testnet'te işlem gerçekleşti!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## CANLI PARAYA GEÇİŞ (Dikkatli ol!)
+
+1. backend/.env dosyasında:
+   BINANCE_TESTNET = false
+
+2. binance.com → API Management → Yeni key oluştur
+   (IP kısıtlaması ekle, sadece withdrawal'ı kapat)
+
+3. Railway Variables'ta key'leri güncelle
+
+⚠ UYARI: Gerçek para kaybedebilirsin.
+   İlk başta küçük miktarlarla test et.
+   Bot hiçbir zaman %100 doğru değildir.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## SORUN GİDERME
+
+❌ "API bağlantısı kurulamadı"
+   → Railway servisinin çalışıp çalışmadığını kontrol et
+   → VITE_API_URL doğru mu?
+
+❌ "Binance error -2014"
+   → API Key hatalı girmiş olabilir
+
+❌ "Binance error -1121"
+   → Sembol yanlış (BTCUSDT büyük harf olmalı)
+
+❌ Supabase kayıt gitmiyor
+   → SUPABASE_URL ve KEY doğru mu kontrol et
+   → Tablolar oluşturuldu mu?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## PROJE YAPISI
+
+trap-bot/
+├── backend/
+│   ├── main.py           ← FastAPI sunucusu
+│   ├── binance_client.py ← Binance API bağlantısı
+│   ├── strategy.py       ← Bearish Sell Trap motoru
+│   ├── supabase_client.py← Veritabanı
+│   ├── requirements.txt  ← Python paketleri
+│   ├── railway.toml      ← Railway config
+│   └── .env.example      ← Örnek ayarlar
+│
+└── frontend/
+    ├── src/
+    │   ├── App.jsx            ← Ana uygulama
+    │   ├── index.css          ← Tasarım
+    │   ├── pages/
+    │   │   └── Dashboard.jsx  ← Ana sayfa
+    │   └── components/
+    │       ├── StateCard.jsx  ← State göstergesi
+    │       ├── CandleChart.jsx← SVG grafik
+    │       ├── ZonePanel.jsx  ← Zone seviyeleri
+    │       ├── TradePanel.jsx ← Al/Sat paneli
+    │       └── SignalLog.jsx  ← Sinyal geçmişi
+    ├── index.html
+    ├── package.json
+    ├── vite.config.js
+    └── vercel.json        ← Vercel config
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Bu yazılım eğitim amaçlıdır. NFA. DYOR.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
