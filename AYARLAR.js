@@ -19,8 +19,8 @@ const TRAPBOT_CONFIG = {
   // ─── BİNANCE API ──────────────────────────────────────────────
   // Testnet için: testnet.binance.vision → Login → Generate Key
   // Gerçek için:  binance.com → API Management → Create API
-  BINANCE_API_KEY:    "3aPb7S2xkF49MnWArfGrnUvGI98tAgd5u9h1AFJ7G9ZGptS5WzaQTjwDsbcc8z6Y",
-  BINANCE_API_SECRET: "fmzvqZEzS0Zzvssvpa7KnuzZnv1J4B7HtoNj4L5ScL4mtNRwnyYf5LwLgw23A5g5",
+  BINANCE_API_KEY:    "xojOtAddR2wiZn8Ejf1ApM7vSXsG1g8YN9T59mciwNsvqgIwG08b4MqJTqKVAbIG",
+  BINANCE_API_SECRET: "ccSwg8IAmqzeSzpLdbX7P1keFvY9hPRuLTk9t3Ohv5W0WnjggIxOaC3nDsZbuoHl",
   BINANCE_TESTNET:    true,   // true = testnet (güvenli), false = gerçek para
 
   // ─── SUPABASE VERİTABANI ──────────────────────────────────────
