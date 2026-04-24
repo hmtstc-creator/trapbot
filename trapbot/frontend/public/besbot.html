@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BESBOT — Grid & Trap Strategies</title>
+<style>
+/* ── AYAR: Backend URL'ini buraya yaz ── */
+/* Render.com'dan aldığın URL */
+/* Örnek: const API = "https://trapbot.onrender.com" */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@600;700&display=swap');
+
+:root {
+  --bg:     #070b14;
+  --panel:  #0d1225;
+  --panel2: #111827;
+  --border: #1e2a4a;
+  --red:    #ef4444;
+  --amber:  #f59e0b;
+  --green:  #22c55e;
+  --blue:   #3b82f6;
+  --purple: #8b5cf6;
+  --text:   #e2e8f0;
+  --dim:    #64748b;
+  --mono:   'JetBrains Mono', monospace;
+  --disp:   'Rajdhani', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;padding:16px;}
+body::before{content:"";position:fixed;inset:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:9999;}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.logo{font-family:var(--disp);font-size:1.8rem;font-weight:700;letter-spacing:3px;}
+.logo span{color:var(--red);}
+.sub{font-size:.65rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+.api-status{font-size:.7rem;padding:4px 12px;border-radius:3px;border:1px solid var(--border);}
+.api-ok{border-color:var(--green);color:var(--green);}
+.api-err{border-color:var(--red);color:var(--red);}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);}
+.tab{padding:8px 20px;font-family:var(--mono);font-size:.75rem;background:transparent;border:1px solid transparent;border-bottom:none;color:var(--dim);cursor:pointer;letter-spacing:1px;transition:all .2s;border-radius:4px 4px 0 0;}
+.tab.active{background:var(--panel);border-color:var(--border);color:var(--text);}
+.tab:hover:not(.active){color:var(--text);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+/* Panels */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:16px;}
+.panel-title{font-size:.62rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+/* Form */
+label{display:block;font-size:.62rem;color:var(--dim);letter-spacing:1px;margin-bottom:4px;margin-top:10px;}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.8rem;padding:7px 10px;border-radius:3px;outline:none;transition:border-color .2s;}
+input:focus,select:focus{border-color:var(--blue);}
+.hint{font-size:.62rem;color:var(--dim);margin-top:3px;}
+
+/* Buttons */
+.btn{font-family:var(--disp);font-size:.85rem;font-weight:700;letter-spacing:1px;padding:9px 20px;border:none;border-radius:4px;cursor:pointer;transition:all .15s;}
+.btn-red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--red);}
+.btn-red:hover{background:rgba(239,68,68,.3);}
+.btn-green{background:rgba(34,197,94,.15);color:var(--green);border:1px solid var(--green);}
+.btn-green:hover{background:rgba(34,197,94,.3);}
+.btn-blue{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid var(--blue);}
+.btn-blue:hover{background:rgba(59,130,246,.3);}
+.btn-amber{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid var(--amber);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+
+/* Result box */
+.result-box{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:12px;margin-top:12px;font-size:.72rem;line-height:1.8;white-space:pre-wrap;max-height:280px;overflow-y:auto;}
+.result-box.signal{border-color:var(--red);animation:glow 1.5s ease infinite alternate;}
+.result-box.ok{border-color:var(--green);}
+.result-box.err{border-color:var(--red);color:var(--red);}
+
+/* Grid levels table */
+.levels-table{width:100%;border-collapse:collapse;font-size:.7rem;margin-top:8px;}
+.levels-table th{background:rgba(239,68,68,.2);color:var(--amber);padding:5px 8px;text-align:left;letter-spacing:1px;}
+.levels-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text);}
+.levels-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+
+/* Status badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:.62rem;font-weight:700;letter-spacing:1px;}
+.badge-waiting{background:rgba(100,116,139,.2);color:var(--dim);}
+.badge-filled{background:rgba(34,197,94,.2);color:var(--green);}
+.badge-signal{background:rgba(239,68,68,.2);color:var(--red);}
+
+/* Warning box */
+.warning{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.4);border-radius:4px;padding:10px 14px;font-size:.72rem;color:var(--amber);margin-bottom:14px;line-height:1.7;}
+.warning strong{color:var(--amber);}
+
+/* Stat cards */
+.stat-card{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center;}
+.stat-val{font-family:var(--disp);font-size:1.3rem;font-weight:700;margin-bottom:4px;}
+.stat-key{font-size:.6rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+.green{color:var(--green);}
+.red{color:var(--red);}
+.amber{color:var(--amber);}
+.blue{color:var(--blue);}
+
+@keyframes glow{from{box-shadow:0 0 4px rgba(239,68,68,.3);}to{box-shadow:0 0 16px rgba(239,68,68,.6);}}
+hr.div{border:none;border-top:1px solid var(--border);margin:14px 0;}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════
+     ⚙️  AYAR — BURAYA RENDER URL'İNİ YAZ
+     ════════════════════════════════════════════════════════ -->
+<script>
+// ╔══════════════════════════════════════════════════╗
+// ║  SADECE BU SATIRI DEĞİŞTİR                      ║
+// ║  Render.com'dan aldığın URL'yi tırnaklar içine  ║
+// ║  yaz. Başında https:// olsun, sonda / olmasın.  ║
+// ╚══════════════════════════════════════════════════╝
+const API = "https://RENDER_URL_BURAYA_YAZ";
+
+// ─────────────────────────────────────────────────────
+// AŞAĞISINA DOKUNMA
+// ─────────────────────────────────────────────────────
+
+let gridLevels = [];
+let gridActive = false;
+
+// ── API yardımcıları ───────────────────────────────────────
+async function apiFetch(path, method="GET", body=null) {
+  const opts = { method, headers: {"Content-Type":"application/json"} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  return r.json();
+}
+
+function fmt(obj) {
+  return JSON.stringify(obj, null, 2);
+}
+
+// ── Backend bağlantı testi ─────────────────────────────────
+async function checkAPI() {
+  try {
+    const d = await apiFetch("/");
+    const el = document.getElementById("apiStatus");
+    el.textContent = "✓ BAĞLI: " + (d.status || "OK");
+    el.className = "api-status api-ok";
+  } catch(e) {
+    const el = document.getElementById("apiStatus");
+    el.textContent = "✗ BAĞLANAMADI";
+    el.className = "api-status api-err";
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// GRID BOT FONKSİYONLARI
+// ════════════════════════════════════════════════════════════
+
+async function gridSuggest() {
+  const sym = document.getElementById("gridSymbol").value;
+  setResult("gridSuggestResult", "Hesaplanıyor...");
+  try {
+    const d = await apiFetch(`/besbot/grid/suggest/${sym}`);
+    if (d.error) { setResult("gridSuggestResult", d.error, "err"); return; }
+
+    // Otomatik doldur
+    document.getElementById("gridLower").value = d.suggested_lower;
+    document.getElementById("gridUpper").value = d.suggested_upper;
+    document.getElementById("gridCount").value = d.suggested_grids;
+
+    setResult("gridSuggestResult",
+      `✅ Otomatik hesaplandı ve aşağıdaki alanlara dolduruldu:\n\n` +
+      `Alt Sınır : ${d.suggested_lower}\n` +
+      `Üst Sınır : ${d.suggested_upper}\n` +
+      `Grid Sayısı: ${d.suggested_grids}\n` +
+      `Spread    : %${d.spread_percent}\n\n` +
+      `Not: ${d.note}`, "ok");
+  } catch(e) { setResult("gridSuggestResult", e.message, "err"); }
+}
+
+async function gridSetup() {
+  const body = {
+    symbol:       document.getElementById("gridSymbol").value,
+    lower_price:  parseFloat(document.getElementById("gridLower").value),
+    upper_price:  parseFloat(document.getElementById("gridUpper").value),
+    grid_count:   parseInt(document.getElementById("gridCount").value),
+    total_budget: parseFloat(document.getElementById("gridBudget").value),
+  };
+  setResult("gridResult", "Grid kuruluyor...");
+  try {
+    const d = await apiFetch("/besbot/grid/setup", "POST", body);
+    if (d.error) { setResult("gridResult", d.error, "err"); return; }
+
+    gridLevels = d.grid_levels || [];
+    gridActive = true;
+
+    // Tablo çiz
+    renderGridLevels(gridLevels);
+
+    setResult("gridResult",
+      `✅ Grid hazır!\n\n` +
+      `Seviye Sayısı  : ${d.levels}\n` +
+      `Adım Büyüklüğü : $${d.step_size}\n` +
+      `Grid Başına    : $${d.per_grid_budget}\n\n` +
+      `Aşağıdaki tabloda tüm seviyeleri görebilirsin.\n` +
+      `Her seviyede fiyat BUY fiyatına inince alım,\n` +
+      `SELL fiyatına çıkınca satım yapılır.`, "ok");
+  } catch(e) { setResult("gridResult", e.message, "err"); }
+}
+
+function renderGridLevels(levels) {
+  const tbl = document.getElementById("gridLevelsTable");
+  if (!levels.length) { tbl.innerHTML=""; return; }
+  let html = `<table class="levels-table">
+    <tr><th>#</th><th>BUY FİYATI</th><th>SELL FİYATI</th><th>MİKTAR</th><th>DURUM</th></tr>`;
+  levels.forEach(l => {
+    html += `<tr>
+      <td>${l.index+1}</td>
+      <td class="green">$${l.buy_price.toLocaleString()}</td>
+      <td class="red">$${l.sell_price.toLocaleString()}</td>
+      <td>${l.quantity}</td>
+      <td><span class="badge badge-waiting">BEKLİYOR</span></td>
+    </tr>`;
+  });
+  html += "</table>";
+  tbl.innerHTML = html;
+}
+
+async function gridStop() {
+  const sym = document.getElementById("gridSymbol").value;
+  try {
+    const d = await apiFetch(`/besbot/grid/stop/${sym}`, "POST");
+    gridActive = false;
+    gridLevels = [];
+    document.getElementById("gridLevelsTable").innerHTML = "";
+    setResult("gridResult", `Grid durduruldu.\nToplam kâr: $${d.final_profit || 0}`, "ok");
+  } catch(e) { setResult("gridResult", e.message, "err"); }
+}
+
+// ════════════════════════════════════════════════════════════
+// TRAP FUTURES FONKSİYONLARI
+// ════════════════════════════════════════════════════════════
+
+async function trapAnalyze() {
+  const sym      = document.getElementById("trapSymbol").value;
+  const interval = document.getElementById("trapInterval").value;
+  const leverage = document.getElementById("trapLeverage").value;
+  setResult("trapResult", "Analiz yapılıyor...");
+  try {
+    const d = await apiFetch(`/besbot/trap/analyze/${sym}?interval=${interval}&leverage=${leverage}`);
+
+    if (d.signal) {
+      setResult("trapResult",
+        `🔴 SMART SELL SİNYALİ!\n\n` +
+        `Sembol   : ${d.symbol}\n` +
+        `Yön      : ${d.side}\n` +
+        `Giriş    : ${d.entry}\n` +
+        `Stop-Loss: ${d.sl}\n` +
+        `Hedef    : ${d.tp}\n` +
+        `Kaldıraç : ${d.leverage}x\n` +
+        `R:R Oranı: 1:${d.rr_ratio}\n\n` +
+        `${d.message}`, "signal");
+      document.getElementById("trapOpenBtn").disabled = false;
+    } else {
+      setResult("trapResult",
+        `State: ${d.state}\n` +
+        `Sinyal yok. ${d.message}\n\n` +
+        `RSI    : ${d.analysis?.rsi || "—"}\n` +
+        `EMA OK : ${d.analysis?.ema_bearish ? "✓ BEARISH" : "✗ Henüz değil"}`);
+      document.getElementById("trapOpenBtn").disabled = true;
+    }
+  } catch(e) { setResult("trapResult", e.message, "err"); }
+}
+
+async function trapOpenShort() {
+  const body = {
+    symbol:   document.getElementById("trapSymbol").value,
+    interval: document.getElementById("trapInterval").value,
+    leverage: parseInt(document.getElementById("trapLeverage").value),
+    risk_pct: parseFloat(document.getElementById("trapRisk").value),
+  };
+
+  const confirmed = confirm(
+    `⚠️ TESTNET'TE SHORT AÇILACAK!\n\n` +
+    `Sembol: ${body.symbol}\n` +
+    `Kaldıraç: ${body.leverage}x\n` +
+    `Risk: %${body.risk_pct}\n\n` +
+    `Devam etmek istediğine emin misin?`
+  );
+  if (!confirmed) return;
+
+  setResult("trapResult", "SHORT pozisyon açılıyor...");
+  try {
+    const d = await apiFetch("/besbot/trap/open-short", "POST", body);
+    if (!d.executed) {
+      setResult("trapResult", `İşlem yapılmadı: ${d.reason}`, "err");
+      return;
+    }
+    setResult("trapResult",
+      `✅ SHORT AÇILDI!\n\n` +
+      `Sembol   : ${d.symbol}\n` +
+      `Miktar   : ${d.quantity}\n` +
+      `Giriş    : ${d.entry}\n` +
+      `Stop-Loss: ${d.sl}\n` +
+      `Hedef    : ${d.tp}\n` +
+      `Kaldıraç : ${d.leverage}x\n\n` +
+      `Açık pozisyonları görmek için → Pozisyonlar sekmesine git`, "ok");
+  } catch(e) { setResult("trapResult", e.message, "err"); }
+}
+
+// ════════════════════════════════════════════════════════════
+// FUTURES BAKIYE / POZİSYON
+// ════════════════════════════════════════════════════════════
+
+async function loadFuturesBalance() {
+  try {
+    const d = await apiFetch("/besbot/futures/balance");
+    document.getElementById("fBalance").textContent = `$${d.usdt_balance?.toFixed(2) || "—"}`;
+    document.getElementById("fAvail").textContent   = `$${d.usdt_available?.toFixed(2) || "—"}`;
+    document.getElementById("fNet").textContent     = d.testnet ? "TESTNET" : "GERÇEK";
+    document.getElementById("fNet").className       = "stat-val " + (d.testnet ? "amber" : "red");
+  } catch(e) {
+    document.getElementById("fBalance").textContent = "HATA";
+  }
+}
+
+async function loadPositions() {
+  setResult("posResult", "Yükleniyor...");
+  try {
+    const d = await apiFetch("/besbot/futures/positions");
+    if (!d.length) { setResult("posResult", "Açık pozisyon yok."); return; }
+    let txt = `📊 ${d.length} açık pozisyon:\n\n`;
+    d.forEach(p => {
+      const pnl = parseFloat(p.unrealizedProfit || 0);
+      txt += `${p.symbol} | ${p.positionSide} | Miktar: ${p.positionAmt}\n`;
+      txt += `Giriş: ${p.entryPrice} | PnL: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} USDT\n\n`;
+    });
+    setResult("posResult", txt, d.some(p=>parseFloat(p.unrealizedProfit)>0) ? "ok" : "");
+  } catch(e) { setResult("posResult", e.message, "err"); }
+}
+
+// ── Yardımcılar ────────────────────────────────────────────
+function setResult(id, text, type="") {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = "result-box" + (type ? " "+type : "");
+}
+
+function showTab(name) {
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+  document.querySelector(`.tab[data-tab="${name}"]`).classList.add("active");
+  document.getElementById("tab-"+name).classList.add("active");
+}
+
+// ── Başlangıç ──────────────────────────────────────────────
+window.onload = () => {
+  checkAPI();
+  loadFuturesBalance();
+  setInterval(checkAPI, 30000);
+};
+</script>
+
+<!-- ══════════════════════════════════════════════ HTML ══ -->
+
+<div class="header">
+  <div>
+    <div class="logo">BES<span>BOT</span></div>
+    <div class="sub">Grid Bot &amp; Bearish Sell Trap — Futures</div>
+  </div>
+  <span id="apiStatus" class="api-status">Bağlanıyor...</span>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-tab="grid"    onclick="showTab('grid')">📊 GRID BOT</button>
+  <button class="tab"        data-tab="trap"    onclick="showTab('trap')">🔴 TRAP SHORT</button>
+  <button class="tab"        data-tab="pozisyon" onclick="showTab('pozisyon'); loadPositions();">📋 POZİSYONLAR</button>
+  <button class="tab"        data-tab="rehber"  onclick="showTab('rehber')">📖 REHBER</button>
+</div>
+
+<!-- ════════ TAB 1: GRID BOT ════════ -->
+<div class="tab-content active" id="tab-grid">
+
+  <div class="warning">
+    <strong>⚠ Grid Bot nedir?</strong><br>
+    Fiyat bir aralıkta gidip gelirken otomatik al-sat yapar.
+    Fiyat aralık dışına çıkarsa zarar edebilir.
+    Başlangıçta küçük bütçe (50-100 USDT) ile test et.
+  </div>
+
+  <div class="grid-2">
+    <!-- Sol: Ayarlar -->
+    <div class="panel">
+      <div class="panel-title">⚙️ GRID AYARLARI</div>
+
+      <label>Sembol</label>
+      <select id="gridSymbol">
+        <option>BTCUSDT</option><option>ETHUSDT</option>
+        <option>BNBUSDT</option><option>SOLUSDT</option>
+      </select>
+
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="gridSuggest()">
+          🔮 Otomatik Aralık Hesapla
+        </button>
+      </div>
+      <div id="gridSuggestResult" class="result-box" style="margin-top:8px;font-size:.68rem;">
+        "Otomatik Hesapla" ile son 50 muma göre aralık önerilir.</div>
+
+      <hr class="div">
+
+      <label>Alt Fiyat (USDT)</label>
+      <input id="gridLower" type="number" placeholder="Örnek: 90000">
+      <div class="hint">Gridi başlatacağın minimum fiyat</div>
+
+      <label>Üst Fiyat (USDT)</label>
+      <input id="gridUpper" type="number" placeholder="Örnek: 100000">
+      <div class="hint">Gridi başlatacağın maksimum fiyat</div>
+
+      <label>Grid Seviye Sayısı</label>
+      <input id="gridCount" type="number" value="10" min="2" max="50">
+      <div class="hint">Kaç parçaya bölsün? (5-20 arası önerilir)</div>
+
+      <label>Toplam Bütçe (USDT)</label>
+      <input id="gridBudget" type="number" value="100" min="10">
+      <div class="hint">Bütçeni grid seviyelerine eşit böler</div>
+
+      <div class="btn-row">
+        <button class="btn btn-green" onclick="gridSetup()">✓ Grid Kur</button>
+        <button class="btn btn-red"   onclick="gridStop()">✗ Durdur</button>
+      </div>
+      <div id="gridResult" class="result-box">Grid henüz kurulmadı.</div>
+    </div>
+
+    <!-- Sağ: Levels -->
+    <div class="panel">
+      <div class="panel-title">📊 GRID SEVİYELERİ</div>
+      <div id="gridLevelsTable">
+        <div style="color:var(--dim);font-size:.75rem;padding:20px 0;text-align:center;">
+          Grid kurulduktan sonra seviyeler burada görünür.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ TAB 2: TRAP SHORT ════════ -->
+<div class="tab-content" id="tab-trap">
+
+  <div class="warning">
+    <strong>⚠ Futures SHORT nedir?</strong><br>
+    Fiyatın düşeceğini düşünüyorsun → SHORT açıyorsun → fiyat düşünce kâr, yükselirse zarar.<br>
+    <strong>Kaldıraç riski:</strong> 3x kaldıraçta %33 aleyhine hareket = tasfiye (tüm para gider).<br>
+    Başlangıçta max 3x kullan, risk %1'de tut.
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">🔴 TRAP FUTURES AYARLARI</div>
+
+      <label>Sembol</label>
+      <select id="trapSymbol">
+        <option>BTCUSDT</option><option>ETHUSDT</option>
+        <option>BNBUSDT</option><option>SOLUSDT</option>
+      </select>
+
+      <label>Zaman Dilimi</label>
+      <select id="trapInterval">
+        <option>15m</option><option selected>1h</option>
+        <option>4h</option><option>1d</option>
+      </select>
+      <div class="hint">Uzun zaman dilimi = daha güvenilir sinyal</div>
+
+      <label>Kaldıraç (x)</label>
+      <input id="trapLeverage" type="number" value="3" min="1" max="10">
+      <div class="hint">⚠ MAX 5x — başlangıç için 2x veya 3x</div>
+
+      <label>Pozisyon Başına Risk (%)</label>
+      <input id="trapRisk" type="number" value="1" min="0.5" max="5" step="0.5">
+      <div class="hint">Bakiyenin %kaçını risk alıyorsun? (1-2% önerilir)</div>
+
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="trapAnalyze()">🔍 Analiz Et</button>
+        <button class="btn btn-red"  id="trapOpenBtn" onclick="trapOpenShort()" disabled>
+          ⚡ SHORT Aç (Testnet)
+        </button>
+      </div>
+      <div id="trapResult" class="result-box">
+        "Analiz Et" ile Bearish Sell Trap sinyali kontrol edilir.
+        Sinyal varsa "SHORT Aç" butonu aktif olur.
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">💡 NASIL ÇALIŞIR?</div>
+      <div style="font-size:.75rem;line-height:2;color:var(--dim);">
+        <div style="color:var(--text);margin-bottom:8px;font-size:.8rem;">State Machine Akışı:</div>
+        <div>👁 <span style="color:#4a5568">WATCHING</span> — Setup bekleniyor</div>
+        <div>📍 <span style="color:var(--blue)">SETUP</span> — Real Zone'a dokunuldu</div>
+        <div>🎣 <span style="color:var(--amber)">FAKE ZONE</span> — Tuzak kuruldu</div>
+        <div>⏳ <span style="color:#f97316">STOP HUNT</span> — Retail stop'lar temizleniyor</div>
+        <div>🔍 <span style="color:var(--purple)">CONFIRMATION</span> — Son onay bekleniyor</div>
+        <div>🔴 <span style="color:var(--red)">SIGNAL</span> — SHORT aç!</div>
+        <hr class="div">
+        <div style="color:var(--text);margin-bottom:6px;">Risk Hesabı Örneği:</div>
+        <div>Bakiye: 1000 USDT</div>
+        <div>Risk %1 → 10 USDT risk alırsın</div>
+        <div>3x kaldıraç → 30 USDT'lik pozisyon</div>
+        <div>Kâr (1:2 R:R) → +20 USDT</div>
+        <div>Zarar (SL) → -10 USDT</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ TAB 3: POZİSYONLAR ════════ -->
+<div class="tab-content" id="tab-pozisyon">
+  <div class="panel">
+    <div class="panel-title">📊 FUTURES BAKIYE</div>
+    <div class="grid-3">
+      <div class="stat-card">
+        <div class="stat-val green" id="fBalance">—</div>
+        <div class="stat-key">Toplam Bakiye</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val blue" id="fAvail">—</div>
+        <div class="stat-key">Kullanılabilir</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val amber" id="fNet">—</div>
+        <div class="stat-key">Mod</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">📋 AÇIK POZİSYONLAR</div>
+    <div class="btn-row" style="margin-bottom:12px;">
+      <button class="btn btn-blue" onclick="loadPositions()">↺ Yenile</button>
+      <button class="btn btn-amber" onclick="loadFuturesBalance()">↺ Bakiye</button>
+    </div>
+    <div id="posResult" class="result-box">Yükleniyor...</div>
+  </div>
+</div>
+
+<!-- ════════ TAB 4: REHBER ════════ -->
+<div class="tab-content" id="tab-rehber">
+  <div class="panel">
+    <div class="panel-title">📖 BU DOSYAYI NASIL KULLANIRSIN?</div>
+    <div style="font-size:.78rem;line-height:2.2;color:var(--dim);">
+
+      <div style="color:var(--amber);font-size:.8rem;margin-bottom:8px;">ADIM 1 — Backend URL'ini Yaz</div>
+      <div>Bu HTML dosyasının en üstünde şu satırı bul:</div>
+      <div style="background:var(--panel2);padding:8px;border-radius:4px;margin:6px 0;color:var(--green);font-family:var(--mono);">
+        const API = "https://RENDER_URL_BURAYA_YAZ";</div>
+      <div>Render.com'dan aldığın URL'yi tırnaklar içine yaz. Bitti.</div>
+
+      <hr class="div">
+      <div style="color:var(--amber);font-size:.8rem;margin-bottom:8px;">ADIM 2 — Ana Siteye Nasıl Eklersin?</div>
+      <div>Bu dosyayı <strong>frontend/public/</strong> klasörüne at.</div>
+      <div>Sonra tarayıcıda: <strong>siteadresi.vercel.app/besbot.html</strong></div>
+      <div>Veya ana sitene bir link ekle: &lt;a href="/besbot.html"&gt;BesBot&lt;/a&gt;</div>
+
+      <hr class="div">
+      <div style="color:var(--amber);font-size:.8rem;margin-bottom:8px;">ADIM 3 — Testnet Futures API Key</div>
+      <div>Futures testnet için farklı bir adres var:</div>
+      <div style="background:var(--panel2);padding:8px;border-radius:4px;margin:6px 0;color:var(--blue);">
+        testnet.binancefuture.com</div>
+      <div>Buradan key al → Render'daki environment variables'a ekle.</div>
+      <div>Spot ve Futures için aynı key çalışır (testnet.binance.vision).</div>
+
+      <hr class="div">
+      <div style="color:var(--red);font-size:.8rem;margin-bottom:8px;">⚠ GERÇEK PARAYA GEÇİŞ</div>
+      <div>Render Environment Variables'da:</div>
+      <div style="background:var(--panel2);padding:8px;border-radius:4px;margin:6px 0;color:var(--amber);">
+        BINANCE_TESTNET = false</div>
+      <div>Yap. Ve binance.com'dan gerçek API key al.</div>
+      <div style="color:var(--red);margin-top:6px;">
+        ⚠ Gerçek kaldıraçlı işlem = hızlı para kaybı riski.<br>
+        İlk ay sadece testnet kullan. Stratejini test et.
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

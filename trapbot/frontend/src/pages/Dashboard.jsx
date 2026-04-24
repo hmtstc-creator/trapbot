@@ -1,7 +1,6 @@
 import { useState } from "react"
 import StateCard from "../components/StateCard"
 import ZonePanel from "../components/ZonePanel"
-import PriceBar from "../components/PriceBar"
 import CandleChart from "../components/CandleChart"
 import TradePanel from "../components/TradePanel"
 import SignalLog from "../components/SignalLog"

@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from binance_client import BinanceClient
 from strategy import BearishSellTrapStrategy
 from supabase_client import SupabaseClient
+from besbot.besbot_routes import besbot_router
 import logging
 
 load_dotenv()
@@ -27,6 +28,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# BesBot stratejileri
+app.include_router(besbot_router)
 
 # Clients
 binance = BinanceClient(

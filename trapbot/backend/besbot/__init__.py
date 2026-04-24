@@ -1,0 +1,1 @@
+# BesBot strategies package

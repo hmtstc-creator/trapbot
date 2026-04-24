@@ -109,3 +109,5 @@ export function SignalLog({ signals }) {
     </div>
   )
 }
+
+export default ZonePanel
