@@ -20,6 +20,8 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
+      const safeInterval = interval || "1h"
+      
       const [priceRes, analyzeRes, signalsRes, candlesRes] = await Promise.all([
         fetch(`${API}/api/price/${symbol}`).then(r => r.json()),
         fetch(`${API}/api/analyze/${symbol}?interval=${interval}`).then(r => r.json()),
@@ -68,11 +70,11 @@ export default function App() {
   useEffect(() => {
     fetchAll()
     fetchBalance()
-    const interval_id = setInterval(() => {
+    const timerId = setInterval(() => {
       fetchAll()
       fetchBalance()
     }, 30000) // auto refresh every 30s
-    return () => clearInterval(interval_id)
+    return () => clearInterval(timerId)
   }, [fetchAll, fetchBalance])
 
   return (
