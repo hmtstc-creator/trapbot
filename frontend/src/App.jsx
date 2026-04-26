@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import Dashboard from "./pages/Dashboard"
 import "./index.css"
 
-const API = import.meta.env.VITE_API_URL || "https://trapbot-backend.onrender.com"
+const API = import.meta.env.VITE_API_URL || "trapbot-backend.up.railway.app"
 
 export default function App() {
   const [symbol, setSymbol]   = useState("BTCUSDT")

@@ -14,7 +14,7 @@ const TRAPBOT_CONFIG = {
   // ─── RENDER.COM BACKEND URL ───────────────────────────────────
   // Render.com → Dashboard → trapbot servisi → URL kısmı
   // Örnek: "https://trapbot.onrender.com"
-  BACKEND_URL: "https://trapbot-backend.onrender.com",
+  BACKEND_URL: "trapbot-backend.up.railway.app",
 
   // ─── BİNANCE API ──────────────────────────────────────────────
   // Testnet için: testnet.binance.vision → Login → Generate Key
