@@ -76,7 +76,7 @@ class BinanceClient:
         data = await self._get("/api/v3/ticker/price", {"symbol": symbol})
         if isinstance(data,dict) and "price" in data:
             return float(data["price"])
-        raise Exception("Binance Fiyat Alınamadı: {data}")
+        raise Exception(f"Binance Fiyat Alınamadı: {data}")
 
     async def get_klines(self, symbol: str, interval: str = "1h", limit: int = 100):
         raw = await self._get("/api/v3/klines", {

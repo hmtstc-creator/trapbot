@@ -15,6 +15,16 @@ from supabase_client import SupabaseClient
 from besbot.besbot_routes import besbot_router
 import logging
 
+
+
+binance_live = BinanceClient(
+    api_key="",
+    api_secret="",
+    testnet=False
+)
+
+
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -74,12 +84,12 @@ async def root():
 
 @app.get("/api/price/{symbol}")
 async def get_price(symbol: str):
-    """Get current price from Binance"""
-    try:
-        price = await binance.get_price(symbol.upper())
-        return {"symbol": symbol.upper(), "price": price}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    price = await binance_live.get_price(symbol.upper())
+    return {"symbol": symbol.upper(), "price": price}
+
+
+
+
 
 @app.get("/api/balance")
 async def get_balance():
@@ -92,18 +102,14 @@ async def get_balance():
 
 @app.get("/api/candles/{symbol}")
 async def get_candles(symbol: str, interval: str = "1h", limit: int = 100):
-    """Get OHLCV candle data"""
-    try:
-        candles = await binance.get_klines(symbol.upper(), interval, limit)
-        return {"symbol": symbol, "interval": interval, "candles": candles}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    candles = await binance_live.get_klines(symbol.upper(), interval, limit)
+    return {"symbol": symbol, "interval": interval, "candles": candles}
 
 @app.get("/api/analyze/{symbol}")
 async def analyze(symbol: str, interval: str = "1h"):
     """Run Bearish Sell Trap analysis on symbol"""
     try:
-        candles = await binance.get_klines(symbol.upper(), interval, 100)
+        candles = await binance_live.get_klines(symbol.upper(), interval, 100)
         result = strategy.analyze(candles)
         
         # Log to Supabase
